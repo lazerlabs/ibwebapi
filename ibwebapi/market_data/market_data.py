@@ -1,11 +1,93 @@
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from ibwebapi.client.endpoints import IBKREndpoint
 
 from ..client.rest_client import IBKRRESTClient
+
+
+class TimePeriod(Enum):
+    MIN_1 = "1min"
+    MIN_2 = "2min"
+    MIN_3 = "3min"
+    MIN_5 = "5min"
+    MIN_10 = "10min"
+    MIN_15 = "15min"
+    MIN_30 = "30min"
+    HOUR_1 = "1h"
+    HOUR_2 = "2h"
+    HOUR_3 = "3h"
+    HOUR_4 = "4h"
+    HOUR_8 = "8h"
+    DAY_1 = "1d"
+    WEEK_1 = "1w"
+    MONTH_1 = "1m"
+
+    # Additional time periods
+    MIN_4 = "4min"
+    MIN_6 = "6min"
+    MIN_7 = "7min"
+    MIN_8 = "8min"
+    MIN_9 = "9min"
+    MIN_11 = "11min"
+    MIN_12 = "12min"
+    MIN_13 = "13min"
+    MIN_14 = "14min"
+    MIN_16 = "16min"
+    MIN_17 = "17min"
+    MIN_18 = "18min"
+    MIN_19 = "19min"
+    MIN_20 = "20min"
+    MIN_21 = "21min"
+    MIN_22 = "22min"
+    MIN_23 = "23min"
+    MIN_24 = "24min"
+    MIN_25 = "25min"
+    MIN_26 = "26min"
+    MIN_27 = "27min"
+    MIN_28 = "28min"
+    MIN_29 = "29min"
+    HOUR_5 = "5h"
+    HOUR_6 = "6h"
+    HOUR_7 = "7h"
+    DAY_2 = "2d"
+    DAY_3 = "3d"
+    DAY_4 = "4d"
+    DAY_5 = "5d"
+    WEEK_2 = "2w"
+    WEEK_3 = "3w"
+    WEEK_4 = "4w"
+    MONTH_2 = "2m"
+    MONTH_3 = "3m"
+    MONTH_4 = "4m"
+    MONTH_5 = "5m"
+    MONTH_6 = "6m"
+    YEAR_1 = "1y"
+    YEAR_2 = "2y"
+    YEAR_3 = "3y"
+    YEAR_4 = "4y"
+    YEAR_5 = "5y"
+
+
+class BarSize(Enum):
+    MIN_1 = "1min"
+    MIN_2 = "2min"
+    MIN_3 = "3min"
+    MIN_5 = "5min"
+    MIN_10 = "10min"
+    MIN_15 = "15min"
+    MIN_30 = "30min"
+    HOUR_1 = "1h"
+    HOUR_2 = "2h"
+    HOUR_3 = "3h"
+    HOUR_4 = "4h"
+    HOUR_8 = "8h"
+    DAY_1 = "1d"
+    WEEK_1 = "1w"
+    MONTH_1 = "1m"
 
 
 @dataclass
@@ -15,7 +97,13 @@ class HistoricalBar:
     h: float
     l: float  # noqa: E741
     volume: float = field(metadata={"json_key": "v"})
-    timestamp: int = field(metadata={"json_key": "t"})
+    timestamp: datetime = field(
+        metadata={"json_key": "t"}, default_factory=lambda: datetime.fromtimestamp(0)
+    )
+
+    def __post_init__(self):
+        if isinstance(self.timestamp, int):
+            self.timestamp = datetime.fromtimestamp(self.timestamp // 1000)
 
 
 @dataclass
@@ -84,8 +172,8 @@ class IBKRMarketData(IBKRRESTClient):
     async def get_historical_data(
         self,
         conid: str,
-        bar: str,
-        period: str = "1w",
+        bar: BarSize,
+        period: TimePeriod = TimePeriod.WEEK_1,
         exchange: Optional[str] = None,
         start_time: Optional[datetime] = None,
         outside_rth: bool = False,
@@ -103,8 +191,8 @@ class IBKRMarketData(IBKRRESTClient):
         """
         query_params = {
             "conid": conid,
-            "bar": bar,
-            "period": period,
+            "bar": bar.value,
+            "period": period.value,
             "outsideRth": str(outside_rth).lower(),
         }
 

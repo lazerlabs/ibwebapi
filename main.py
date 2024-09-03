@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
-from ibwebapi.market_data.market_data import IBKRMarketData
+from ibwebapi.market_data.market_data import BarSize, IBKRMarketData, TimePeriod
 from ibwebapi.portfolio.portfolio import IBKRPortfolio
 
 logging.basicConfig(
@@ -17,8 +17,8 @@ async def main():
     ) as market_data_client:
         historical_data = await market_data_client.get_historical_data(
             conid="265598",
-            period="1d",
-            bar="1h",
+            period=TimePeriod.DAY_1,
+            bar=BarSize.HOUR_1,
             start_time=datetime.now() - timedelta(days=1),
             outside_rth=False,
         )

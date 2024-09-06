@@ -8,4 +8,5 @@ lib64/
 lib64
 include/
 bin/
+cache/
 pyvenv.cfg

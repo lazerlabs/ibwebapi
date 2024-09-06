@@ -19,7 +19,9 @@ async def main():
             conid="265598",
             period=TimePeriod.DAY_1,
             bar=BarSize.HOUR_1,
-            start_time=datetime.now() - timedelta(days=1),
+            start_time=(datetime.now() - timedelta(days=1)).replace(
+                hour=9, minute=30, second=0, microsecond=0
+            ),
             outside_rth=False,
         )
         logger.info(f"Historical data for AAPL: {historical_data}")

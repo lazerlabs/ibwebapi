@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from ibwebapi.client.endpoints import IBKREndpoint
@@ -135,6 +136,8 @@ class HistoricalData:
 
 class HistoricalDataJSONEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
         if isinstance(obj, HistoricalData):
             return obj.__dict__
         if isinstance(obj, HistoricalBar):
@@ -169,6 +172,27 @@ class HistoricalDataJSONDecoder(json.JSONDecoder):
 
 
 class IBKRMarketData(IBKRRESTClient):
+    def __init__(self, *args, cache_dir: str = "./cache", **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get_cache_filename(
+        self,
+        prefix: str,
+        conid: str,
+        bar: BarSize,
+        period: TimePeriod,
+        exchange: Optional[str],
+        start_time: Optional[datetime],
+        outside_rth: bool,
+    ) -> Path:
+        params = f"{conid}_{bar.value}_{period.value}"
+        params += f"_exchange={exchange}" if exchange else ""
+        params += f"_start={start_time.strftime('%Y%m%d-%H%M%S')}" if start_time else ""
+        params += f"_orth={'1' if outside_rth else '0'}"
+        return self.cache_dir / f"{prefix}_{params}.json"
+
     async def get_historical_data(
         self,
         conid: str,
@@ -177,6 +201,7 @@ class IBKRMarketData(IBKRRESTClient):
         exchange: Optional[str] = None,
         start_time: Optional[datetime] = None,
         outside_rth: bool = False,
+        force_refresh: bool = False,
     ) -> HistoricalData:
         """
         Retrieves historical market data for a given contract.
@@ -189,6 +214,14 @@ class IBKRMarketData(IBKRRESTClient):
         :param outside_rth: Include data outside regular trading hours
         :return: Dictionary containing historical market data
         """
+        cache_file = self._get_cache_filename(
+            "hmd", conid, bar, period, exchange, start_time, outside_rth
+        )
+
+        if not force_refresh and Path(cache_file).exists():
+            with Path(cache_file).open("r") as f:
+                return json.load(f, cls=HistoricalDataJSONDecoder)
+
         query_params = {
             "conid": conid,
             "bar": bar.value,
@@ -205,5 +238,10 @@ class IBKRMarketData(IBKRRESTClient):
             "GET", IBKREndpoint.HISTORICAL_DATA, query_params=query_params
         )
         data = json.loads(json.dumps(response), cls=HistoricalDataJSONDecoder)
+
+        # Cache the response
+        with Path(cache_file).open("w") as f:
+            json.dump(data, f, cls=HistoricalDataJSONEncoder)
+
         return data
         # return response

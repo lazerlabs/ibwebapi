@@ -1,3 +1,11 @@
 ibwebapi.egg-info/
 __pycache__/
 .vscode/
+dist/
+build/
+lib/
+lib64/
+lib64
+include/
+bin/
+pyvenv.cfg

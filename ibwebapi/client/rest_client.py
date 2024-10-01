@@ -20,13 +20,7 @@ class IBKRRESTClient:
         self.session_timeout = session_timeout
         self.session: Optional[ClientSession] = None
         self.connected = False
-        self._endpoint_map = {
-            IBKREndpoint.TICKLE: "/tickle",
-            IBKREndpoint.ACCOUNT_SUMMARY: "/portfolio/{accountId}/summary",
-            IBKREndpoint.PORTFOLIO_ACCOUNTS: "/portfolio/accounts",
-            IBKREndpoint.HISTORICAL_DATA: "/iserver/marketdata/history",  # New endpoint mapping
-            # Add more endpoint mappings here
-        }
+        self._endpoint_map = {endpoint: endpoint.value for endpoint in IBKREndpoint}
 
     async def __aenter__(self):
         await self.connect()
@@ -76,6 +70,7 @@ class IBKRRESTClient:
             raise RuntimeError("Not connected to IBKR API")
 
         url = f"{self.base_url}{self._endpoint_map[endpoint]}"
+        logger.info(f"Request URL: {url}")
 
         # Handle path parameters
         if path_params:
@@ -114,5 +109,3 @@ class IBKRRESTClient:
                     await asyncio.sleep(self.session_timeout)
             except asyncio.CancelledError:
                 logger.info("Stopping client...")
-
-    # ... (rest of the class implementation remains the same)

@@ -11,6 +11,7 @@ class IBKREndpoint(Enum):
     CONTRACT_DETAILS = "/iserver/contract/{conid}/info"
     CONTRACT_INFO = "/iserver/contract/{conid}/info-quick"
     CONTRACT_RULES = "/iserver/contract/rules"
+    SECDEF = "/trsrv/secdef"
     SECDEF_INFO = "/iserver/secdef/info"
     ALL_CONIDS = "/trsrv/all-conids"
     STRIKES = "/iserver/secdef/strikes"

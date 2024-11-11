@@ -8,6 +8,7 @@ from ibwebapi.client.rest_client import IBKRRESTClient
 
 
 class Exchange(Enum):
+    SMART = "SMART"
     UNKNOWN = "UNKNOWN"
     NASDAQ = "NASDAQ"
     MEXI = "MEXI"
@@ -255,6 +256,13 @@ class IBKRContractSearch(IBKRRESTClient):
         """
         data = {"conid": conid, "isBuy": isBuy}
         return await self._request("POST", IBKREndpoint.CONTRACT_RULES, json=data)
+
+    async def get_secdef(self, conid: int) -> Dict[str, Any]:
+        """
+        Returns the security definition for the given conid.
+        """
+        data = {"conids": conid}
+        return await self._request("GET", IBKREndpoint.SECDEF, query_params=data)
 
     async def get_secdef_info(
         self,

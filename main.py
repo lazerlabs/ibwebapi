@@ -21,14 +21,23 @@ async def main():
         print("[bold]Getting historical data for AAPL:[/bold]")
         historical_data = await market_data_client.get_historical_data_json(
             conid="265598",
-            period=TimePeriod.DAY_1,
-            bar=BarSize.HOUR_1,
-            start_time=(datetime.now() - timedelta(days=1)).replace(
-                hour=9, minute=30, second=0, microsecond=0
+            period=TimePeriod.WEEK_1,
+            bar=BarSize.MIN_1,
+            start_time=datetime(2004, 11, 17).replace(
+                hour=1, minute=30, second=0, microsecond=0
             ),
             outside_rth=False,
         )
-        print(historical_data)
+        # Create a copy of historical_data to modify
+        formatted_data = historical_data.copy()
+        # Convert timestamps in data array to readable dates
+        if "data" in formatted_data:
+            for bar in formatted_data["data"]:
+                if "t" in bar:
+                    bar["t"] = datetime.fromtimestamp(bar["t"] / 1000).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+        print(formatted_data)
 
     async with IBKRContractSearch(base_url=BASE_URL) as client:
         # Search for a contract

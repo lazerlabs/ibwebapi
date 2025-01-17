@@ -244,6 +244,10 @@ class IBKRContractSearch(IBKRRESTClient):
             "GET", IBKREndpoint.CONTRACT_DETAILS, path_params={"conid": conid}
         )
 
+    async def test_module(self) -> str:
+        print("-=" * 30, 'SOMETHING"')
+        return "test_module"
+
     async def get_contract_rules(
         self, conid: int, isBuy: bool = True
     ) -> Dict[str, Any]:

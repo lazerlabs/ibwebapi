@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -175,6 +176,7 @@ class IBKRMarketData(IBKRRESTClient):
         super().__init__(*args, **kwargs)
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self._logger = kwargs.get("logger", logging.getLogger(__name__))
 
     def _get_cache_filename(
         self,
@@ -186,11 +188,17 @@ class IBKRMarketData(IBKRRESTClient):
         start_time: Optional[datetime],
         outside_rth: bool,
     ) -> Path:
+        # Create a subdirectory for this contract
+        contract_dir = self.cache_dir / str(conid)
+        contract_dir.mkdir(parents=True, exist_ok=True)
+
+        # Include conid in both directory and filename for clarity
         params = f"{conid}_{bar.value}_{period.value}"
         params += f"_exchange={exchange}" if exchange else ""
         params += f"_start={start_time.strftime('%Y%m%d-%H%M%S')}" if start_time else ""
         params += f"_orth={'1' if outside_rth else '0'}"
-        return self.cache_dir / f"{prefix}_{params}.json"
+
+        return contract_dir / f"{prefix}_{params}.json"
 
     async def get_historical_data_json(
         self,
@@ -218,6 +226,7 @@ class IBKRMarketData(IBKRRESTClient):
         )
 
         if not force_refresh and Path(cache_file).exists():
+            self._logger.info(f"Using cached data from {cache_file}")
             with Path(cache_file).open("r") as f:
                 return json.load(f)
 
@@ -270,7 +279,6 @@ class IBKRMarketData(IBKRRESTClient):
         data = await self.get_historical_data_json(
             conid, bar, period, exchange, start_time, outside_rth, force_refresh
         )
-        data = json.loads(data, cls=HistoricalDataJSONDecoder)
-
-        return data
+        # The response is already parsed JSON, no need to parse it again
+        return HistoricalData(**data)
         # return response
